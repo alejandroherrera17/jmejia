@@ -1,6 +1,7 @@
 import { startOfMonth } from "date-fns";
 
 import { prisma } from "@/lib/prisma";
+import { serializePrismaData } from "@/lib/utils";
 
 export async function getDashboardMetrics() {
   const monthStart = startOfMonth(new Date());
@@ -59,7 +60,7 @@ export async function getDashboardMetrics() {
     salesToday: Number(salesToday._sum.total ?? 0),
     monthSales: Number(monthSales._sum.total ?? 0),
     activeProducts,
-    openShift,
+    openShift: serializePrismaData(openShift),
     staleProducts
   };
 }

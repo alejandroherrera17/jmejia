@@ -32,6 +32,13 @@ enum ShiftStatus {
   CLOSED
 }
 
+enum EmailJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String
@@ -167,6 +174,7 @@ model Sale {
   notes         String?
   createdAt     DateTime     @default(now())
   items         SaleItem[]
+  emailJobs     EmailJob[]
 }
 
 model SaleItem {
@@ -211,4 +219,22 @@ model CashMovement {
   createdAt   DateTime         @default(now())
 
   @@index([shiftId, type, createdAt])
+}
+
+model EmailJob {
+  id          String         @id @default(cuid())
+  saleId      String
+  sale        Sale           @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  status      EmailJobStatus @default(PENDING)
+  attempts    Int            @default(0)
+  workerId    String?
+  lastError   String?
+  availableAt DateTime       @default(now())
+  lockedAt    DateTime?
+  processedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([saleId])
+  @@index([status, availableAt, createdAt])
 }

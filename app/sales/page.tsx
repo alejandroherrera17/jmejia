@@ -19,7 +19,8 @@ export default async function SalesPage() {
           <div>
             <h1 className="text-2xl font-semibold">Ventas POS</h1>
             <p className="text-sm text-muted-foreground">
-              Busqueda rapida, cliente por cedula y salida lista para factura y tirilla termica.
+              Flujo de caja avanzado con cliente inline, IVA desglosado, pagos omnicanal y una base
+              lista para facturacion electronica DIAN.
             </p>
           </div>
           <PosTerminal products={products} customer={customer} />

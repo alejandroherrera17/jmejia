@@ -1,9 +1,9 @@
-import { z } from "zod";
 import { Role } from "@prisma/client";
+import { z } from "zod";
 
 export const signInSchema = z.object({
-  email: z.string().email("Ingresa un correo válido"),
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres")
+  email: z.string().email("Ingresa un correo valido"),
+  password: z.string().min(6, "La contrasena debe tener al menos 6 caracteres")
 });
 
 export const productSchema = z.object({
@@ -16,12 +16,40 @@ export const productSchema = z.object({
   cost: z.coerce.number().min(0, "El costo no puede ser negativo"),
   price: z.coerce.number().min(0, "El precio no puede ser negativo"),
   stock: z.coerce.number().int().min(0, "El stock no puede ser negativo"),
-  minStock: z.coerce.number().int().min(0, "El stock mínimo no puede ser negativo"),
-  subcategoryId: z.string().min(1, "Selecciona una subcategoría")
+  minStock: z.coerce.number().int().min(0, "El stock minimo no puede ser negativo"),
+  subcategoryId: z.string().min(1, "Selecciona una subcategoria")
 });
 
 export const customerLookupSchema = z.object({
-  documentId: z.string().min(6, "Ingresa una cédula válida")
+  documentId: z.string().min(6, "Ingresa una cedula valida")
+});
+
+export const customerUpsertSchema = z.object({
+  documentId: z.string().min(6, "Ingresa una cedula o NIT valido"),
+  firstName: z.string().trim().optional(),
+  lastName: z.string().trim().optional(),
+  email: z.string().email("Ingresa un correo valido").optional().or(z.literal("")),
+  phone: z.string().trim().optional().or(z.literal(""))
+});
+
+export const saleItemSchema = z.object({
+  productId: z.string().min(1, "Selecciona un producto"),
+  quantity: z.coerce.number().int().positive("La cantidad debe ser mayor a cero"),
+  unitPrice: z.coerce.number().min(0, "El precio unitario no puede ser negativo")
+});
+
+export const createSaleSchema = z.object({
+  customerId: z.string().optional().nullable(),
+  subtotal: z.coerce.number().min(0, "El subtotal no puede ser negativo"),
+  discount: z.coerce.number().min(0, "El descuento no puede ser negativo").default(0),
+  cashReceived: z.coerce
+    .number()
+    .min(0, "El valor recibido no puede ser negativo")
+    .optional()
+    .nullable(),
+  paymentMethod: z.enum(["qr", "card", "cash", "split"]).default("cash"),
+  notes: z.string().max(500, "Las notas son demasiado largas").optional().or(z.literal("")),
+  items: z.array(saleItemSchema).min(1, "Agrega al menos un producto")
 });
 
 export const cashShiftSchema = z.object({
@@ -50,3 +78,5 @@ export const createUserSchema = z.object({
 export type ProductFormValues = z.infer<typeof productSchema>;
 export type CategoryFormValues = z.infer<typeof categorySchema>;
 export type SubcategoryFormValues = z.infer<typeof subcategorySchema>;
+export type CustomerUpsertValues = z.infer<typeof customerUpsertSchema>;
+export type CreateSaleValues = z.infer<typeof createSaleSchema>;

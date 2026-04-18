@@ -1,9 +1,10 @@
 import type { CashMovementType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { serializePrismaData } from "@/lib/utils";
 
 export async function getOpenShift() {
-  return prisma.cashShift.findFirst({
+  const shift = await prisma.cashShift.findFirst({
     where: { status: "OPEN" },
     include: {
       openedBy: true,
@@ -17,6 +18,8 @@ export async function getOpenShift() {
       openedAt: "desc"
     }
   });
+
+  return serializePrismaData(shift);
 }
 
 export async function openCashShift(input: {

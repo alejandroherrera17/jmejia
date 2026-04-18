@@ -8,7 +8,7 @@ type AlertItem = {
   name: string;
   stock?: number;
   minStock?: number;
-  updatedAt: Date;
+  updatedAt: string;
 };
 
 export function AlertCenter({

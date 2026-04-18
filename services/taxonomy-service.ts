@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { serializePrismaData } from "@/lib/utils";
 import type { CategoryFormValues, SubcategoryFormValues } from "@/lib/validations";
 
 export async function getTaxonomyOverview() {
@@ -27,7 +28,7 @@ export async function getTaxonomyOverview() {
     }
   });
 
-  return categories;
+  return serializePrismaData(categories);
 }
 
 export async function createCategory(values: CategoryFormValues) {

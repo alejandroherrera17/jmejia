@@ -5,7 +5,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 
 type Shift = {
   openingAmount: unknown;
-  openedAt: Date;
+  openedAt: string;
   openedBy: {
     name: string;
   };

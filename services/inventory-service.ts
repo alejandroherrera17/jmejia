@@ -1,7 +1,7 @@
 import { subMonths } from "date-fns";
 
 import { prisma } from "@/lib/prisma";
-import { buildBarcode } from "@/lib/utils";
+import { buildBarcode, serializePrismaData } from "@/lib/utils";
 import type { ProductFormValues } from "@/lib/validations";
 
 export async function getInventoryOverview() {
@@ -49,10 +49,10 @@ export async function getInventoryOverview() {
   const lowStockCount = products.filter((product) => product.stock <= product.minStock).length;
 
   return {
-    products,
+    products: serializePrismaData(products),
     lowStockCount,
-    staleProducts,
-    categories
+    staleProducts: serializePrismaData(staleProducts),
+    categories: serializePrismaData(categories)
   };
 }
 
@@ -102,5 +102,6 @@ export async function getLowStockAlerts() {
   return products
     .filter((product) => product.stock <= product.minStock)
     .sort((left, right) => left.stock - right.stock)
-    .slice(0, 10);
+    .slice(0, 10)
+    .map((product) => serializePrismaData(product));
 }
