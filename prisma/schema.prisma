@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CAJERO
+  BODEGUERO
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CashMovementType {
+  OPENING
+  SALE
+  EXPENSE
+  INCOME
+  CLOSING
+  ADJUSTMENT
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          Role
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  sales         Sale[]
+  cashShifts    CashShift[]
+  cashMovements CashMovement[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  documentId  String   @unique
+  email       String?
+  phone       String?
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  sales       Sale[]
+}
+
+model Category {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  description   String?
+  subcategories Subcategory[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Subcategory {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([categoryId, name])
+}
+
+model Product {
+  id             String        @id @default(cuid())
+  name           String
+  sku            String        @unique
+  barcode        String        @unique
+  description    String?
+  brand          String?
+  unit           String        @default("UND")
+  cost           Decimal       @db.Decimal(10, 2)
+  price          Decimal       @db.Decimal(10, 2)
+  stock          Int           @default(0)
+  minStock       Int           @default(5)
+  status         ProductStatus @default(ACTIVE)
+  subcategoryId  String
+  subcategory    Subcategory   @relation(fields: [subcategoryId], references: [id], onDelete: Restrict)
+  saleItems      SaleItem[]
+  inventoryLogs  InventoryLog[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([subcategoryId, status])
+  @@index([barcode])
+}
+
+model InventoryLog {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity    Int
+  reason      String
+  notes       String?
+  createdAt   DateTime @default(now())
+}
+
+model Sale {
+  id            String       @id @default(cuid())
+  invoiceNumber String       @unique
+  customerId    String?
+  customer      Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  cashierId     String
+  cashier       User         @relation(fields: [cashierId], references: [id], onDelete: Restrict)
+  subtotal      Decimal      @db.Decimal(10, 2)
+  tax           Decimal      @db.Decimal(10, 2)
+  discount      Decimal      @db.Decimal(10, 2) @default(0)
+  total         Decimal      @db.Decimal(10, 2)
+  cashReceived  Decimal?     @db.Decimal(10, 2)
+  change        Decimal?     @db.Decimal(10, 2)
+  notes         String?
+  createdAt     DateTime     @default(now())
+  items         SaleItem[]
+}
+
+model SaleItem {
+  id          String   @id @default(cuid())
+  saleId      String
+  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  total       Decimal  @db.Decimal(10, 2)
+
+  @@index([saleId, productId])
+}
+
+model CashShift {
+  id              String         @id @default(cuid())
+  openedById      String
+  openedBy        User           @relation(fields: [openedById], references: [id], onDelete: Restrict)
+  openingAmount   Decimal        @db.Decimal(10, 2)
+  closingAmount   Decimal?       @db.Decimal(10, 2)
+  expectedAmount  Decimal?       @db.Decimal(10, 2)
+  difference      Decimal?       @db.Decimal(10, 2)
+  status          ShiftStatus    @default(OPEN)
+  openedAt        DateTime       @default(now())
+  closedAt        DateTime?
+  notes           String?
+  movements       CashMovement[]
+
+  @@index([status, openedAt])
+}
+
+model CashMovement {
+  id          String           @id @default(cuid())
+  shiftId     String
+  shift       CashShift        @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  type        CashMovementType
+  amount      Decimal          @db.Decimal(10, 2)
+  concept     String
+  createdAt   DateTime         @default(now())
+
+  @@index([shiftId, type, createdAt])
+}
