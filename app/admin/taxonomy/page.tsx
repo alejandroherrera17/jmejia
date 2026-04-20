@@ -1,11 +1,11 @@
 import { TaxonomyManager } from "@/components/admin/taxonomy-manager";
 import { PageShell } from "@/components/page-shell";
 import { PageTransition } from "@/components/page-transition";
-import { requireRole } from "@/lib/permissions";
+import { requireModuleAccess } from "@/lib/permissions";
 import { getTaxonomyOverview } from "@/services/taxonomy-service";
 
 export default async function TaxonomyPage() {
-  await requireRole(["ADMIN"]);
+  await requireModuleAccess("taxonomy", ["ADMIN"]);
   const categories = await getTaxonomyOverview();
 
   return (

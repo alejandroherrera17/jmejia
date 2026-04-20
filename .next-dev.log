@@ -1,0 +1,10 @@
+Error: spawn EPERM
+    at <unknown> (C:\Users\exito047\Downloads\jmejia\node_modules\next\dist\cli\next-dev.js:234:45)
+    at new Promise (<anonymous>)
+    at startServer (C:\Users\exito047\Downloads\jmejia\node_modules\next\dist\cli\next-dev.js:210:16)
+    at runDevServer (C:\Users\exito047\Downloads\jmejia\node_modules\next\dist\cli\next-dev.js:305:23)
+    at Module.nextDev (C:\Users\exito047\Downloads\jmejia\node_modules\next\dist\cli\next-dev.js:313:11) {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'spawn'
+}

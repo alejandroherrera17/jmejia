@@ -7,8 +7,6 @@ import type { CreateSaleValues, CustomerUpsertValues } from "@/lib/validations";
 const IVA_RATE = 0.19;
 const IVA_DECIMAL = new Prisma.Decimal("0.19");
 
-type TransactionClient = Prisma.TransactionClient;
-
 function roundMoney(value: number) {
   return Number(value.toFixed(2));
 }
@@ -116,7 +114,10 @@ export async function getOrCreateCustomer(input: CustomerUpsertValues) {
   return serializePrismaData(customer);
 }
 
-async function getOpenShiftForCashier(tx: TransactionClient, cashierId: string) {
+async function getOpenShiftForCashier(
+  tx: Pick<typeof prisma, "cashShift">,
+  cashierId: string
+) {
   return tx.cashShift.findFirst({
     where: {
       openedById: cashierId,

@@ -3,12 +3,12 @@ import { CashShiftCard } from "@/components/cash/cash-shift-card";
 import { PageShell } from "@/components/page-shell";
 import { PageTransition } from "@/components/page-transition";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireRole } from "@/lib/permissions";
+import { requireModuleAccess } from "@/lib/permissions";
 import { formatCurrency } from "@/lib/utils";
 import { getOpenShift } from "@/services/cash-service";
 
 export default async function CashPage() {
-  await requireRole(["ADMIN", "CAJERO"]);
+  await requireModuleAccess("cash", ["ADMIN", "CAJERO"]);
 
   const openShift = await getOpenShift();
   const totalMovements =
