@@ -1,63 +1,11 @@
 import type { NextAuthConfig } from "next-auth";
 import type { Role } from "@prisma/client";
+import baseAuthConfig from "@/auth.config";
 
-<<<<<<< HEAD
-import authConfig from "@/auth.config";
-import { prisma } from "@/lib/prisma";
-import { ensureAdminUser } from "@/services/user-service";
-import { signInSchema } from "@/lib/validations";
-
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  ...authConfig,
-  session: {
-    strategy: "jwt"
-  },
-  providers: [
-    Credentials({
-      credentials: {
-        email: {},
-        password: {}
-      },
-      async authorize(credentials) {
-        await ensureAdminUser();
-
-        const parsed = signInSchema.safeParse(credentials);
-        if (!parsed.success) return null;
-
-        const user = await prisma.user.findUnique({
-          where: { email: parsed.data.email }
-        });
-
-        if (!user) return null;
-
-        const passwordValid = await bcrypt.compare(
-          parsed.data.password,
-          user.passwordHash
-        );
-
-        if (!passwordValid) return null;
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role
-        };
-      }
-    })
-  ],
-=======
 export const authConfig = {
-  trustHost: true,
-  providers: [],
-  session: {
-    strategy: "jwt"
-  },
-  pages: {
-    signIn: "/auth/sign-in"
-  },
->>>>>>> 9ea9377de7b60e87493b9b7666a5addfdfa5f03b
+  ...baseAuthConfig,
   callbacks: {
+    ...baseAuthConfig.callbacks,
     async jwt({ token, user }) {
       if (user?.role) {
         token.role = user.role as Role;

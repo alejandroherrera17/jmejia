@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-import NextAuth from "next-auth";
-
-import authConfig from "@/auth.config";
-
-export const { auth: middleware } = NextAuth(authConfig);
-=======
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
@@ -34,7 +27,6 @@ export async function middleware(request: NextRequest) {
 
   return NextResponse.next();
 }
->>>>>>> 9ea9377de7b60e87493b9b7666a5addfdfa5f03b
 
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"]
