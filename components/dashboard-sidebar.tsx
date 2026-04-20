@@ -9,18 +9,25 @@ import {
   Users
 } from "lucide-react";
 
+import type { UserModuleAccessState } from "@/lib/module-access";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/inventory", label: "Inventario", icon: Boxes },
-  { href: "/admin/taxonomy", label: "Categorias", icon: FolderTree },
-  { href: "/sales", label: "Ventas POS", icon: CreditCard },
-  { href: "/cash", label: "Caja", icon: BarChart3 },
-  { href: "/users", label: "Usuarios", icon: Users }
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, module: "dashboard" },
+  { href: "/inventory", label: "Inventario", icon: Boxes, module: "inventory" },
+  { href: "/admin/taxonomy", label: "Categorias", icon: FolderTree, module: "taxonomy" },
+  { href: "/sales", label: "Ventas POS", icon: CreditCard, module: "sales" },
+  { href: "/cash", label: "Caja", icon: BarChart3, module: "cash" },
+  { href: "/users", label: "Usuarios", icon: Users, module: "users" }
 ] as const;
 
-export function DashboardSidebar() {
+export function DashboardSidebar({
+  access
+}: Readonly<{
+  access?: UserModuleAccessState;
+}>) {
+  const visibleLinks = links.filter(({ module }) => access?.[module] ?? false);
+
   return (
     <aside className="hidden w-72 shrink-0 flex-col border-r border-border/60 bg-card/70 p-5 backdrop-blur xl:flex">
       <div className="mb-8 flex items-center gap-3 rounded-3xl bg-primary px-4 py-4 text-primary-foreground shadow-glow">
@@ -34,7 +41,7 @@ export function DashboardSidebar() {
       </div>
 
       <nav className="space-y-2">
-        {links.map(({ href, label, icon: Icon }) => (
+        {visibleLinks.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}

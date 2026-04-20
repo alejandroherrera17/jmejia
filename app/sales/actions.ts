@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireRole } from "@/lib/permissions";
+import { withAuditContext } from "@/lib/audit-context";
+import { assertModuleAccess } from "@/lib/permissions";
 import { serializePrismaData } from "@/lib/utils";
 import {
   createSaleSchema,
@@ -17,7 +18,7 @@ import {
 } from "@/services/sales-service";
 
 export async function lookupCustomerAction(input: { documentId: string }) {
-  await requireRole(["ADMIN", "CAJERO"]);
+  await assertModuleAccess("sales", ["ADMIN", "CAJERO"]);
   const values = customerLookupSchema.parse(input);
 
   return lookupCustomerByDocument(values.documentId);
@@ -30,7 +31,7 @@ export async function searchOrCreateCustomerAction(input: {
   email?: string;
   phone?: string;
 }) {
-  await requireRole(["ADMIN", "CAJERO"]);
+  const currentUser = await assertModuleAccess("sales", ["ADMIN", "CAJERO"]);
   const documentId = input.documentId.trim();
 
   if (!documentId) {
@@ -60,7 +61,13 @@ export async function searchOrCreateCustomerAction(input: {
   }
 
   const values = customerUpsertSchema.parse(input);
-  const customer = await getOrCreateCustomer(values);
+  const customer = await withAuditContext(
+    {
+      userId: currentUser.user.id,
+      userName: currentUser.user.name
+    },
+    async () => getOrCreateCustomer(values)
+  );
 
   revalidatePath("/sales");
 
@@ -102,20 +109,35 @@ export async function processSaleAction(input: {
     unitPrice: number;
   }>;
 }) {
-  const session = await requireRole(["ADMIN", "CAJERO"]);
+  const currentUser = await assertModuleAccess("sales", ["ADMIN", "CAJERO"]);
   const values = createSaleSchema.parse(input);
 
-  const sale = await createSale({
-    ...values,
-    cashierId: session.user.id
-  });
+  const sale = await withAuditContext(
+    {
+      userId: currentUser.user.id,
+      userName: currentUser.user.name
+    },
+    async () =>
+      createSale({
+        ...values,
+        cashierId: currentUser.user.id
+      })
+  );
 
   revalidatePath("/sales");
   revalidatePath("/inventory");
   revalidatePath("/cash");
   revalidatePath("/dashboard");
 
-  await enqueueInvoiceEmail(sale.id);
+  await withAuditContext(
+    {
+      userId: currentUser.user.id,
+      userName: currentUser.user.name
+    },
+    async () => {
+      await enqueueInvoiceEmail(sale.id);
+    }
+  );
 
   return serializePrismaData({
     id: sale.id,

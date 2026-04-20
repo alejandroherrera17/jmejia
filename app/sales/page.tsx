@@ -1,11 +1,11 @@
 import { PageShell } from "@/components/page-shell";
 import { PageTransition } from "@/components/page-transition";
 import { PosTerminal } from "@/components/sales/pos-terminal";
-import { requireRole } from "@/lib/permissions";
+import { requireModuleAccess } from "@/lib/permissions";
 import { lookupCustomerByDocument, searchProducts } from "@/services/sales-service";
 
 export default async function SalesPage() {
-  await requireRole(["ADMIN", "CAJERO"]);
+  await requireModuleAccess("sales", ["ADMIN", "CAJERO"]);
 
   const [products, customer] = await Promise.all([
     searchProducts(""),

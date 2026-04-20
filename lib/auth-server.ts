@@ -1,17 +1,17 @@
-import type { NextAuthConfig } from "next-auth";
-import type { Role } from "@prisma/client";
+import "server-only";
 
-<<<<<<< HEAD
-import authConfig from "@/auth.config";
+import bcrypt from "bcryptjs";
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+
+import { authConfig } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ensureAdminUser } from "@/services/user-service";
 import { signInSchema } from "@/lib/validations";
+import { logAction } from "@/services/audit-service";
+import { ensureAdminUser } from "@/services/user-service";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
-  session: {
-    strategy: "jwt"
-  },
   providers: [
     Credentials({
       credentials: {
@@ -37,6 +37,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!passwordValid) return null;
 
+        await logAction(
+          user.id,
+          "LOGIN",
+          `Inicio de sesion exitoso para ${user.email}.`,
+          user.name
+        );
+
         return {
           id: user.id,
           email: user.email,
@@ -45,33 +52,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
       }
     })
-  ],
-=======
-export const authConfig = {
-  trustHost: true,
-  providers: [],
-  session: {
-    strategy: "jwt"
-  },
-  pages: {
-    signIn: "/auth/sign-in"
-  },
->>>>>>> 9ea9377de7b60e87493b9b7666a5addfdfa5f03b
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user?.role) {
-        token.role = user.role as Role;
-      }
-
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub ?? "";
-        session.user.role = token.role as Role;
-      }
-
-      return session;
-    }
-  }
-} satisfies NextAuthConfig;
+  ]
+});

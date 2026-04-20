@@ -1,6 +1,12 @@
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 
+import {
+  getDefaultModuleAccess,
+  moduleAccessSelect,
+  normalizeModuleAccess,
+  type UserModuleAccessState
+} from "@/lib/module-access";
 import { prisma } from "@/lib/prisma";
 
 const DEFAULT_ADMIN = {
@@ -35,7 +41,10 @@ export async function ensureAdminUser() {
       name: DEFAULT_ADMIN.name,
       email: DEFAULT_ADMIN.email,
       passwordHash,
-      role: Role.ADMIN
+      role: Role.ADMIN,
+      moduleAccess: {
+        create: getDefaultModuleAccess(Role.ADMIN)
+      }
     },
     select: {
       id: true,
@@ -46,18 +55,26 @@ export async function ensureAdminUser() {
 }
 
 export async function listUsers() {
-  return prisma.user.findMany({
+  const users = await prisma.user.findMany({
     select: {
       id: true,
       name: true,
       email: true,
       role: true,
-      createdAt: true
+      createdAt: true,
+      moduleAccess: {
+        select: moduleAccessSelect
+      }
     },
     orderBy: {
       createdAt: "desc"
     }
   });
+
+  return users.map((user) => ({
+    ...user,
+    moduleAccess: normalizeModuleAccess(user.moduleAccess, user.role)
+  }));
 }
 
 export async function createUser(input: {
@@ -66,14 +83,18 @@ export async function createUser(input: {
   password: string;
   role: Role;
 }) {
+  const normalizedEmail = input.email.trim().toLowerCase();
   const passwordHash = await bcrypt.hash(input.password, 10);
 
   return prisma.user.create({
     data: {
-      name: input.name,
-      email: input.email,
+      name: input.name.trim(),
+      email: normalizedEmail,
       passwordHash,
-      role: input.role
+      role: input.role,
+      moduleAccess: {
+        create: getDefaultModuleAccess(input.role)
+      }
     },
     select: {
       id: true,
@@ -82,6 +103,75 @@ export async function createUser(input: {
       role: true
     }
   });
+}
+
+export async function updateUser(input: {
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  role: Role;
+  moduleAccess?: UserModuleAccessState;
+}) {
+  const normalizedEmail = input.email.trim().toLowerCase();
+
+  const existingUser = await prisma.user.findUnique({
+    where: { id: input.id },
+    select: { id: true, email: true }
+  });
+
+  if (!existingUser) {
+    throw new Error("El usuario que intentas editar ya no existe.");
+  }
+
+  const duplicatedEmail = await prisma.user.findFirst({
+    where: {
+      email: normalizedEmail,
+      id: {
+        not: input.id
+      }
+    },
+    select: { id: true }
+  });
+
+  if (duplicatedEmail) {
+    throw new Error("Ya existe otro usuario con ese correo electronico.");
+  }
+
+  const password = input.password?.trim();
+  const passwordHash = password ? await bcrypt.hash(password, 10) : undefined;
+  const normalizedModuleAccess = input.moduleAccess ?? getDefaultModuleAccess(input.role);
+
+  const user = await prisma.user.update({
+    where: { id: input.id },
+    data: {
+      name: input.name.trim(),
+      email: normalizedEmail,
+      role: input.role,
+      ...(passwordHash ? { passwordHash } : {}),
+      moduleAccess: {
+        upsert: {
+          create: normalizedModuleAccess,
+          update: normalizedModuleAccess
+        }
+      }
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      createdAt: true,
+      moduleAccess: {
+        select: moduleAccessSelect
+      }
+    }
+  });
+
+  return {
+    ...user,
+    moduleAccess: normalizeModuleAccess(user.moduleAccess, user.role)
+  };
 }
 
 export async function checkDatabaseConnection() {
