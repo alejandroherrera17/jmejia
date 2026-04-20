@@ -3,17 +3,15 @@ import bcrypt from "bcryptjs";
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
+import authConfig from "@/auth.config";
 import { prisma } from "@/lib/prisma";
 import { ensureAdminUser } from "@/services/user-service";
 import { signInSchema } from "@/lib/validations";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  trustHost: true,
+  ...authConfig,
   session: {
     strategy: "jwt"
-  },
-  pages: {
-    signIn: "/auth/sign-in"
   },
   providers: [
     Credentials({
@@ -64,13 +62,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       return session;
-    },
-    authorized({ auth, request }) {
-      const isLoggedIn = !!auth?.user;
-      const isAuthRoute = request.nextUrl.pathname.startsWith("/auth");
-
-      if (isAuthRoute) return true;
-      return isLoggedIn;
     }
   }
 });

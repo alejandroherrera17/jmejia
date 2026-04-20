@@ -10,12 +10,6 @@ function getBackoffMinutes(attempts: number) {
 }
 
 export async function enqueueInvoiceEmail(saleId: string) {
-  console.log("Depuracion Prisma:", {
-    keys: Object.keys(prismaClient),
-    isInstance: prismaClient instanceof PrismaClient
-  });
-  console.log("[enqueueInvoiceEmail] prisma.emailJob:", prismaClient.emailJob);
-
   return prismaClient.emailJob.upsert({
     where: {
       saleId
