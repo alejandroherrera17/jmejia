@@ -5,6 +5,12 @@ import { getToken } from "next-auth/jwt";
 const AUTH_ROUTE_PREFIX = "/auth";
 
 export async function middleware(request: NextRequest) {
+  // --- BLOQUE DE APERTURA TEMPORAL ---
+  // Esto salta toda la validación y deja pasar a todo el mundo
+  // para permitir el acceso durante la presentación.
+  return NextResponse.next(); 
+  // ------------------------------------
+
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET
@@ -30,4 +36,4 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"]
-};
+}

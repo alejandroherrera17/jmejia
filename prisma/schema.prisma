@@ -3,72 +3,40 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_DATABASE_URL")
 }
 
-enum Role {
-  ADMIN
-  CAJERO
-  BODEGUERO
-}
-
-enum ProductStatus {
-  ACTIVE
-  INACTIVE
-}
-
-enum CashMovementType {
-  OPENING
-  SALE
-  EXPENSE
-  INCOME
-  CLOSING
-  ADJUSTMENT
-}
-
-enum ShiftStatus {
-  OPEN
-  CLOSED
-}
-
-enum EmailJobStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-}
-
 model User {
-  id            String    @id @default(cuid())
+  id            String           @id @default(cuid())
   name          String
-  email         String    @unique
+  email         String           @unique
   passwordHash  String
   role          Role
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  moduleAccess  UserPermissions?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
   accounts      Account[]
-  sessions      Session[]
-  sales         Sale[]
-  cashShifts    CashShift[]
-  cashMovements CashMovement[]
   auditLogs     AuditLog[]
+  cashMovements CashMovement[]
+  cashShifts    CashShift[]
+  sales         Sale[]
+  sessions      Session[]
+  moduleAccess  UserPermissions?
 }
 
 model UserPermissions {
-  userId      String   @id
-  dashboard   Boolean  @default(false)
-  inventory   Boolean  @default(false)
-  sales       Boolean  @default(false)
-  cash        Boolean  @default(false)
-  users       Boolean  @default(false)
-  taxonomy    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @id
+  dashboard Boolean  @default(false)
+  inventory Boolean  @default(false)
+  sales     Boolean  @default(false)
+  cash      Boolean  @default(false)
+  users     Boolean  @default(false)
+  taxonomy  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Account {
@@ -106,25 +74,25 @@ model VerificationToken {
 }
 
 model Customer {
-  id          String   @id @default(cuid())
-  firstName   String
-  lastName    String
-  documentId  String   @unique
-  email       String?
-  phone       String?
-  address     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  sales       Sale[]
+  id         String   @id @default(cuid())
+  firstName  String
+  lastName   String
+  documentId String   @unique
+  email      String?
+  phone      String?
+  address    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  sales      Sale[]
 }
 
 model Category {
   id            String        @id @default(cuid())
   name          String        @unique
   description   String?
-  subcategories Subcategory[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  subcategories Subcategory[]
 }
 
 model Subcategory {
@@ -132,116 +100,115 @@ model Subcategory {
   name        String
   description String?
   categoryId  String
-  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  products    Product[]
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([categoryId, name])
 }
 
 model Product {
-  id             String        @id @default(cuid())
-  name           String
-  sku            String        @unique
-  barcode        String        @unique
-  description    String?
-  brand          String?
-  imageUrl       String?
-  unit           String        @default("UND")
-  cost           Decimal       @db.Decimal(10, 2)
-  price          Decimal       @db.Decimal(10, 2)
-  stock          Int           @default(0)
-  minStock       Int           @default(5)
-  status         ProductStatus @default(ACTIVE)
-  subcategoryId  String
-  subcategory    Subcategory   @relation(fields: [subcategoryId], references: [id], onDelete: Restrict)
-  saleItems      SaleItem[]
-  inventoryLogs  InventoryLog[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id            String         @id @default(cuid())
+  name          String
+  sku           String         @unique
+  barcode       String         @unique
+  description   String?
+  brand         String?
+  imageUrl      String?
+  unit          String         @default("UND")
+  cost          Decimal        @db.Decimal(10, 2)
+  price         Decimal        @db.Decimal(10, 2)
+  stock         Int            @default(0)
+  minStock      Int            @default(5)
+  status        ProductStatus  @default(ACTIVE)
+  subcategoryId String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  inventoryLogs InventoryLog[]
+  subcategory   Subcategory    @relation(fields: [subcategoryId], references: [id])
+  saleItems     SaleItem[]
 
   @@index([subcategoryId, status])
   @@index([barcode])
 }
 
 model InventoryLog {
-  id          String   @id @default(cuid())
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  quantity    Int
-  reason      String
-  notes       String?
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  productId String
+  quantity  Int
+  reason    String
+  notes     String?
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Sale {
-  id            String       @id @default(cuid())
-  invoiceNumber String       @unique
+  id            String     @id @default(cuid())
+  invoiceNumber String     @unique
   customerId    String?
-  customer      Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
   cashierId     String
-  cashier       User         @relation(fields: [cashierId], references: [id], onDelete: Restrict)
-  subtotal      Decimal      @db.Decimal(10, 2)
-  tax           Decimal      @db.Decimal(10, 2)
-  discount      Decimal      @db.Decimal(10, 2) @default(0)
-  total         Decimal      @db.Decimal(10, 2)
-  cashReceived  Decimal?     @db.Decimal(10, 2)
-  change        Decimal?     @db.Decimal(10, 2)
+  subtotal      Decimal    @db.Decimal(10, 2)
+  tax           Decimal    @db.Decimal(10, 2)
+  discount      Decimal    @default(0) @db.Decimal(10, 2)
+  total         Decimal    @db.Decimal(10, 2)
+  cashReceived  Decimal?   @db.Decimal(10, 2)
+  change        Decimal?   @db.Decimal(10, 2)
   notes         String?
-  createdAt     DateTime     @default(now())
+  createdAt     DateTime   @default(now())
+  emailJobs     EmailJob?
+  cashier       User       @relation(fields: [cashierId], references: [id])
+  customer      Customer?  @relation(fields: [customerId], references: [id])
   items         SaleItem[]
-  emailJobs     EmailJob[]
 }
 
 model SaleItem {
-  id          String   @id @default(cuid())
-  saleId      String
-  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
-  quantity    Int
-  unitPrice   Decimal  @db.Decimal(10, 2)
-  total       Decimal  @db.Decimal(10, 2)
+  id        String  @id @default(cuid())
+  saleId    String
+  productId String
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  total     Decimal @db.Decimal(10, 2)
+  product   Product @relation(fields: [productId], references: [id])
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
 
   @@index([saleId, productId])
 }
 
 model CashShift {
-  id              String         @id @default(cuid())
-  openedById      String
-  openedBy        User           @relation(fields: [openedById], references: [id], onDelete: Restrict)
-  openingAmount   Decimal        @db.Decimal(10, 2)
-  closingAmount   Decimal?       @db.Decimal(10, 2)
-  expectedAmount  Decimal?       @db.Decimal(10, 2)
-  difference      Decimal?       @db.Decimal(10, 2)
-  status          ShiftStatus    @default(OPEN)
-  openedAt        DateTime       @default(now())
-  closedAt        DateTime?
-  notes           String?
-  movements       CashMovement[]
+  id             String         @id @default(cuid())
+  openedById     String
+  openingAmount  Decimal        @db.Decimal(10, 2)
+  closingAmount  Decimal?       @db.Decimal(10, 2)
+  expectedAmount Decimal?       @db.Decimal(10, 2)
+  difference     Decimal?       @db.Decimal(10, 2)
+  status         ShiftStatus    @default(OPEN)
+  openedAt       DateTime       @default(now())
+  closedAt       DateTime?
+  notes          String?
+  movements      CashMovement[]
+  openedBy       User           @relation(fields: [openedById], references: [id])
 
   @@index([status, openedAt])
 }
 
 model CashMovement {
-  id          String           @id @default(cuid())
-  shiftId     String
-  shift       CashShift        @relation(fields: [shiftId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User             @relation(fields: [userId], references: [id], onDelete: Restrict)
-  type        CashMovementType
-  amount      Decimal          @db.Decimal(10, 2)
-  concept     String
-  createdAt   DateTime         @default(now())
+  id        String           @id @default(cuid())
+  shiftId   String
+  userId    String
+  type      CashMovementType
+  amount    Decimal          @db.Decimal(10, 2)
+  concept   String
+  createdAt DateTime         @default(now())
+  shift     CashShift        @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id])
 
   @@index([shiftId, type, createdAt])
 }
 
 model EmailJob {
   id          String         @id @default(cuid())
-  saleId      String
-  sale        Sale           @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  saleId      String         @unique
   status      EmailJobStatus @default(PENDING)
   attempts    Int            @default(0)
   workerId    String?
@@ -251,8 +218,8 @@ model EmailJob {
   processedAt DateTime?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+  sale        Sale           @relation(fields: [saleId], references: [id], onDelete: Cascade)
 
-  @@unique([saleId])
   @@index([status, availableAt, createdAt])
 }
 
@@ -263,8 +230,40 @@ model AuditLog {
   action    String
   details   String
   timestamp DateTime @default(now())
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user      User?    @relation(fields: [userId], references: [id])
 
   @@index([userId, timestamp])
   @@index([action, timestamp])
+}
+
+enum Role {
+  ADMIN
+  CAJERO
+  BODEGUERO
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CashMovementType {
+  OPENING
+  SALE
+  EXPENSE
+  INCOME
+  CLOSING
+  ADJUSTMENT
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
+}
+
+enum EmailJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
