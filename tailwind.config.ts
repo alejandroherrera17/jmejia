@@ -51,11 +51,11 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)"
       },
       boxShadow: {
-        glow: "0 12px 48px -16px rgba(8, 15, 28, 0.35)"
+        glow: "0 18px 40px -24px rgba(86, 3, 173, 0.45)"
       },
       backgroundImage: {
         "dashboard-grid":
-          "linear-gradient(to right, rgba(120, 143, 156, 0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(120, 143, 156, 0.08) 1px, transparent 1px)"
+          "linear-gradient(to right, rgba(131, 103, 199, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(179, 233, 199, 0.34) 1px, transparent 1px)"
       }
     }
   },

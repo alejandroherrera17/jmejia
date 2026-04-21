@@ -18,7 +18,7 @@ export function MobileNav({
   const visibleItems = items.filter(({ module }) => access?.[module] ?? false);
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-card/95 px-4 py-3 backdrop-blur xl:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#b3e9c7] bg-[#f0fff1]/95 px-4 py-3 backdrop-blur xl:hidden">
       <div
         className="grid gap-2"
         style={{
@@ -29,7 +29,7 @@ export function MobileNav({
           <Link
             key={href}
             href={href}
-            className="flex min-h-14 flex-col items-center justify-center rounded-2xl text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            className="flex min-h-14 flex-col items-center justify-center rounded-2xl text-xs font-medium text-[#8367c7] transition hover:bg-[#c2f8cb] hover:text-[#5603ad]"
           >
             <Icon className="mb-1 size-4" />
             {label}
